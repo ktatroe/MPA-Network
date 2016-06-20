@@ -6,18 +6,18 @@
 /*
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
- 
+
  * Redistributions of source code must retain the above copyright notice,
  this list of conditions and the following disclaimer.
- 
+
  * Redistributions in binary form must reproduce the above copyright notice,
  this list of conditions and the following disclaimer in the documentation
  and/or other materials provided with the distribution.
- 
+
  * Neither the name Kevin Tatroe nor the names of its contributors may be
  used to endorse or promote products derived from this software without
  specific prior written permission.
- 
+
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,34 +43,37 @@ public class FetchServiceResponseOperation: GroupOperation {
 
     let downloadOperation: DownloadServiceResponseOperation
     let parseOperation: ProcessServiceResponseOperation
-    
-    
+
+
     // MARK: - Initialization
-    
+
     public init(request: ServiceRequest, session: ServiceSession? = nil, responseProcessor: ServiceResponseProcessor) {
+        // If there's no container for us to write to, we're in a completely bogus and irrecoverable state
+        // swiftlint:disable force_try
         let cachesFolder = try! NSFileManager.defaultManager().URLForDirectory(.CachesDirectory, inDomain: .UserDomainMask, appropriateForURL: nil, create: true)
-        
+        // swiftlint:enable force_try
+
         var cacheFileName = FetchServiceResponseOperation.randomCacheFileName()
-        
+
         if let payload = request.payload {
             cacheFileName = "\(payload.hashValue())"
         }
-        
+
         let cacheFile = cachesFolder.URLByAppendingPathComponent(cacheFileName)
-        
+
         downloadOperation = DownloadServiceResponseOperation(request: request, session: session, cacheFile: cacheFile)
-        
+
         parseOperation = ProcessServiceResponseOperation(request: request, responseProcessor: responseProcessor, cacheFile: cacheFile)
         parseOperation.addDependency(downloadOperation)
-        
+
         super.init(operations: [downloadOperation, parseOperation])
-        
+
         name = "Fetch Service Request Operation"
     }
-    
-    
+
+
     // MARK: - Private
-    
+
     private static func randomCacheFileName() -> String {
         // TODO: use guid or something similar
         return "cacheFile"
@@ -85,54 +88,52 @@ public class FetchServiceResponseOperation: GroupOperation {
 */
 public class DownloadServiceResponseOperation: GroupOperation {
     // MARK: - Properties
-    
+
     let request: ServiceRequest
-    
+
     let cacheFile: NSURL
-    
-    
+
+
     // MARK: - Initialization
-    
+
     public init(request: ServiceRequest, session: ServiceSession? = nil, cacheFile: NSURL) {
         self.request = request
         self.cacheFile = cacheFile
-        
+
         super.init(operations: [])
-        
+
         name = "Download Service Request Operation"
-        
+
         if let urlRequest = request.makeURLRequest(session), url = urlRequest.URL {
-            let task = NSURLSession.sharedSession().downloadTaskWithURL(url) { url, response, error in
+            let urlSession = Container.resolve(NSURLSession.self) ?? NSURLSession.sharedSession()
+
+            let task = urlSession.downloadTaskWithURL(url) { url, response, error in
                 self.downloadFinished(url, response: response as? NSHTTPURLResponse, error: error)
             }
-            
+
             let taskOperation = URLSessionTaskOperation(task: task)
             addOperation(taskOperation)
         }
     }
-    
-    
+
+
     // MARK: - Private
-    
+
     private func downloadFinished(url: NSURL?, response: NSHTTPURLResponse?, error: NSError?) {
         if let localURL = url {
             do {
                 try NSFileManager.defaultManager().removeItemAtURL(cacheFile)
-            }
-            catch { }
-            
+            } catch { }
+
             do {
                 try NSFileManager.defaultManager().moveItemAtURL(localURL, toURL: cacheFile)
-            }
-            catch let error as NSError {
+            } catch let error as NSError {
                 aggregateError(error)
             }
-            
-        }
-        else if let error = error {
+
+        } else if let error = error {
             aggregateError(error)
-        }
-        else {
+        } else {
             // do nothing and let the operation complete
         }
     }
@@ -145,36 +146,36 @@ public class DownloadServiceResponseOperation: GroupOperation {
 */
 public class ProcessServiceResponseOperation: Operation {
     // MARK: - Properties
-    
+
     let request: ServiceRequest
     let cacheFile: NSURL
-    
+
     let responseProcessor: ServiceResponseProcessor
-    
-    
+
+
     // MARK: - Initialization
-    
+
     public init(request: ServiceRequest, responseProcessor: ServiceResponseProcessor, cacheFile: NSURL) {
         self.request = request
         self.cacheFile = cacheFile
-        
+
         self.responseProcessor = responseProcessor
-        
+
         super.init()
     }
-    
-    
+
+
     // MARK: - Overrides
-    
+
     override public func execute() {
         guard let stream = NSInputStream(URL: cacheFile) else {
             finish()
-            
+
             return
         }
-        
+
         stream.open()
-        
+
         defer {
             stream.close()
         }
@@ -212,13 +213,13 @@ public class ProcessServiceResponseOperation: Operation {
 public enum ServiceResponseProcessorParam {
     /// Initial input is typically a memory-efficient `NSInputStream`.
     case stream(NSInputStream)
-    
+
     /// `NSData` can be used to pipe data from one processor to the next.
     case data(String, NSData)
 
     /// The processor was terminal, with an indication of whether the data was completely processed.
     case processed(Bool)
-    
+
     /// The processor was terminal, and ended with a known error.
     case error(NSError)
 }
@@ -240,41 +241,41 @@ public protocol ServiceResponseProcessor: class {
 /*
 public class PipelineServiceResponseProcessor : ServiceResponseProcessor {
     let processors: [ServiceResponseProcessor]
-    
-    
+
+
     // MARK: - Initialization
-    
+
     init(processors: [ServiceResponseProcessor]) {
         self.processors = processors
     }
-    
+
 
     // MARK: - Protocols
-    
+
     // MARK: <ServiceResponseProcessor>
-    
+
     func process(request: ServiceRequest, input: ServiceResponseProcessorParam, completionBlock: (ServiceResponseProcessorParam) -> Void) {
         var currentInput = input
 
-        /// TODO: Wait for the completionBlock of each processor to start the next, oy
+        // TODO: Wait for the completionBlock of each processor to start the next, oy
         for processor in processors {
             let response = processor.process(request, input: currentInput, completionBlock: (processCompletion: ServiceResponseProcessorParam) in {
                 switch response {
                 case .stream(_):
                     currentInput = response
-                    
+
                 case .data(_, _):
                     currentInput = response
-                    
+
                 case .processed(_):
                     return response
-                    
+
                 case .error(_):
                     return response
                 }
             })
         }
-        
+
         return .processed(false)
     }
 }
