@@ -11,7 +11,7 @@ import Foundation
 private var URLSessionTaksOperationKVOContext = 0
 
 /**
-    `URLSessionTaskOperation` is an `Operation` that lifts an `NSURLSessionTask` 
+    `URLSessionTaskOperation` is an `Operation` that lifts an `NSURLSessionTask`
     into an operation.
 
     Note that this operation does not participate in any of the delegate callbacks \
@@ -23,40 +23,37 @@ private var URLSessionTaksOperationKVOContext = 0
 */
 public class URLSessionTaskOperation: Operation {
     let task: NSURLSessionTask
-    var isObserving = false
-    
+
     public init(task: NSURLSessionTask) {
         assert(task.state == .Suspended, "Tasks must be suspended.")
 
         self.task = task
-        
+
         super.init()
     }
-    
+
     override public func execute() {
         assert(task.state == .Suspended, "Task was resumed by something other than \(self).")
 
         task.addObserver(self, forKeyPath: "state", options: [], context: &URLSessionTaksOperationKVOContext)
-        isObserving = true
-        
+
         task.resume()
     }
-    
-    override public func observeValueForKeyPath(keyPath: String?, ofObject object:AnyObject?, change:[String : AnyObject]?, context:UnsafeMutablePointer<Void>) {
+
+    override public func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         guard context == &URLSessionTaksOperationKVOContext else { return }
-        
+
         if object === task && keyPath == "state" && task.state == .Completed {
-//            if isObserving  {
-//                do {
-//                    // TODO: removeObserver:forKeyPath: isn't marked as throwing, but can throw; should wrap in ObjC code
-//                    try removeObserver(self, forKeyPath: "state")
-//                } catch { }
-//            }
-            
-            finish()
+            task.removeObserver(self, forKeyPath: "state")
+
+            if let error = task.error {
+                finish([error])
+            } else {
+                finish()
+            }
         }
     }
-    
+
     override public func cancel() {
         task.cancel()
         super.cancel()
