@@ -131,6 +131,9 @@ open class Operation: Foundation.Operation {
             qualityOfService = newValue ? .userInitiated : .default
         }
     }
+    
+    /// Did the operation finish with an error
+    fileprivate(set) open var failed = false
 
     override open var isExecuting: Bool {
         return state == .executing
@@ -266,7 +269,7 @@ open class Operation: Foundation.Operation {
             state = .finishing
 
             let combinedErrors = _internalErrors + errors
-            let failed = !combinedErrors.isEmpty
+            failed = !combinedErrors.isEmpty
             
             if let name = name {
                 if failed {
