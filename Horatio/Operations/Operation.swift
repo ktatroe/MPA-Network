@@ -171,6 +171,9 @@ open class Operation: Foundation.Operation {
             qualityOfService = newValue ? .userInitiated : .default
         }
     }
+    
+    /// Did the operation finish with an error
+    fileprivate(set) open var failed = false
 
     fileprivate(set) open var failed = false
 

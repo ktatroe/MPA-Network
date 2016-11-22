@@ -9,7 +9,7 @@ A convenient extension to UIKit.UIUserNotificationSettings.
 #if os(iOS)
 
 import UIKit
-    import UserNotifications
+import UserNotifications
 
     
 extension UNNotificationSettings {
