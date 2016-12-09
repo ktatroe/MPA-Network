@@ -168,6 +168,7 @@ open class ProcessServiceResponseOperation: Operation {
 
         defer {
             stream.close()
+            removeCachedFile()
         }
 
         self.responseProcessor.process(request, input: .stream(stream), completionBlock: { (response: ServiceResponseProcessorParam) -> Void in
@@ -190,6 +191,15 @@ open class ProcessServiceResponseOperation: Operation {
                 return
             }
         })
+    }
+    
+    
+    // MARK: - Private
+    
+    fileprivate func removeCachedFile() {
+        do {
+            try FileManager.default.removeItem(at: cacheFile)
+        } catch { }
     }
 }
 
