@@ -10,6 +10,8 @@ import Foundation
  */
 public protocol JSONProcessor {
     func processJSONData(_ request: ServiceRequest, jsonData: JSONObject, completionBlock: @escaping (_ errors: [NSError]?) -> Void)
+    func processJSONDataArray(_ request: ServiceRequest, jsonData: [JSONObject], completionBlock: @escaping (_ errors: [NSError]?) -> Void)
+    @available(*, deprecated, message: "Please use processJSONDataArray instead.")
     func processJSONData(_ request: ServiceRequest, jsonData: [JSONObject], completionBlock: @escaping (_ errors: [NSError]?) -> Void)
 }
 
@@ -19,8 +21,14 @@ extension JSONProcessor {
         completionBlock(nil)
     }
     
-    
     func processJSONData(_ request: ServiceRequest, jsonData: [JSONObject], completionBlock: @escaping (_ errors: [NSError]?) -> Void) {
+        print("🚫This processJSONData method has been deprecated. Please use processJSONDataArray instead.🚫")
+        processJSONDataArray(request, jsonData: jsonData) { (_) in
+            completionBlock(nil)
+        }
+    }
+    
+    func processJSONDataArray(_ request: ServiceRequest, jsonData: [JSONObject], completionBlock: @escaping (_ errors: [NSError]?) -> Void) {
         completionBlock(nil)
     }
 }
@@ -81,25 +89,25 @@ open class JSONServiceResponseProcessor: ServiceResponseProcessor {
     // MARK: - Private
 
     fileprivate func processObject(_ request: ServiceRequest, jsonObject: JSONObject, completionBlock: @escaping (ServiceResponseProcessorParam) -> Void) {
-        jsonProcessor.processJSONData(request, jsonData: jsonObject, completionBlock: { (errors: [NSError]?) in
-            if let error = errors?.first {
-                completionBlock(.error(error))
-                return
-            }
-
-            completionBlock(.processed(true))
-        })
-    }
-
-
-    fileprivate func processArray(_ request: ServiceRequest, jsonArray: [JSONObject], completionBlock: @escaping (ServiceResponseProcessorParam) -> Void) {
-        jsonProcessor.processJSONData(request, jsonData: jsonArray, completionBlock: { (errors: [NSError]?) in
+        jsonProcessor.processJSONData(request, jsonData: jsonObject) { (errors: [NSError]?) in
             if let error = errors?.first {
                 completionBlock(.error(error))
                 return
             }
             
             completionBlock(.processed(true))
-        })
+        }
+    }
+
+
+    fileprivate func processArray(_ request: ServiceRequest, jsonArray: [JSONObject], completionBlock: @escaping (ServiceResponseProcessorParam) -> Void) {
+        jsonProcessor.processJSONDataArray(request, jsonData: jsonArray) { (errors: [NSError]?) in
+            if let error = errors?.first {
+                completionBlock(.error(error))
+                return
+            }
+            
+            completionBlock(.processed(true))
+        }
     }
 }
