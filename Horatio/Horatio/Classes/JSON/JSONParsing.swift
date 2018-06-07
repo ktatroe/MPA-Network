@@ -32,7 +32,7 @@ public struct JSONParsingOptions: OptionSet {
  types and missing values.
 */
 open class JSONParser {
-    open static func parseIdentifier(_ value: Any?, options: JSONParsingOptions = .none) -> String? {
+    public static func parseIdentifier(_ value: Any?, options: JSONParsingOptions = .none) -> String? {
         if let stringValue = JSONParser.parseString(value) {
             return stringValue.lowercased()
         }
@@ -40,7 +40,7 @@ open class JSONParser {
         return nil
     }
 
-    open static func parseString(_ value: Any?, options: JSONParsingOptions = .none) -> String? {
+    public static func parseString(_ value: Any?, options: JSONParsingOptions = .none) -> String? {
         if let stringValue = value as? String {
             return stringValue.stringByDecodingJavascriptEntities()
         }
@@ -58,7 +58,7 @@ open class JSONParser {
         return nil
     }
 
-    open static func parseInt(_ value: Any?, options: JSONParsingOptions = .none) -> Int? {
+    public static func parseInt(_ value: Any?, options: JSONParsingOptions = .none) -> Int? {
         if let intValue = value as? Int {
             return intValue
         }
@@ -80,7 +80,7 @@ open class JSONParser {
         return nil
     }
 
-    open static func parseDouble(_ value: Any?, options: JSONParsingOptions = .none) -> Double? {
+    public static func parseDouble(_ value: Any?, options: JSONParsingOptions = .none) -> Double? {
         if let doubleValue = value as? Double {
             return doubleValue
         }
@@ -102,7 +102,7 @@ open class JSONParser {
         return nil
     }
 
-    open static func parseBool(_ value: Any?, options: JSONParsingOptions = .none) -> Bool? {
+    public static func parseBool(_ value: Any?, options: JSONParsingOptions = .none) -> Bool? {
         if let boolValue = value as? Bool {
             return boolValue
         }
@@ -128,7 +128,7 @@ open class JSONParser {
         return nil
     }
 
-    open static func parseArray(_ value: Any?, options: JSONParsingOptions = .none) -> [Any]? {
+    public static func parseArray(_ value: Any?, options: JSONParsingOptions = .none) -> [Any]? {
         if let arrayValue = value as? [Any] {
             return arrayValue
         }
@@ -152,7 +152,7 @@ open class JSONParser {
         return nil
     }
 
-    open static func parseObject(_ value: Any?, options: JSONParsingOptions = .none) -> JSONObject? {
+    public static func parseObject(_ value: Any?, options: JSONParsingOptions = .none) -> JSONObject? {
         if let objectValue = value as? [String : Any] {
             return objectValue
         }
@@ -172,7 +172,7 @@ open class JSONParser {
         return nil
     }
 
-    open static func parseISO8601Date(_ value: Any?, options: JSONParsingOptions = .none) -> Date? {
+    public static func parseISO8601Date(_ value: Any?, options: JSONParsingOptions = .none) -> Date? {
         if let dateString = JSONParser.parseString(value, options: options) {
             if let dateValue = Date.dateFromISO8601String(dateString) {
                 return dateValue
@@ -186,7 +186,7 @@ open class JSONParser {
         return nil
     }
 
-    open static func parseDecimalNumber(_ value: Any?, options: JSONParsingOptions = .none) -> NSDecimalNumber? {
+    public static func parseDecimalNumber(_ value: Any?, options: JSONParsingOptions = .none) -> NSDecimalNumber? {
         if let decimalString = JSONParser.parseString(value, options: options) {
             return NSDecimalNumber(string: decimalString, locale: [NSLocale.Key.decimalSeparator: "."])
         }
@@ -215,7 +215,7 @@ extension String {
 
         func decodeEntity(_ entity: String) -> Character? {
             if entity.hasPrefix("\\x") || entity.hasPrefix("\\u") {
-                return decodeHexValue(entity.substring(from: entity.index(entity.startIndex, offsetBy: 2)), base: 16)
+                return decodeHexValue(String(entity[entity.startIndex ..< entity.index(entity.startIndex, offsetBy: 2)]), base: 16)
             }
 
             return nil

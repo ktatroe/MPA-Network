@@ -53,14 +53,14 @@ public enum ServiceEndpointURLContainer {
 open class ServiceEndpoint {
     // MARK: - Properties
 
-    open let identifier: String
+    public let identifier: String
 
-    open var urlContainer: ServiceEndpointURLContainer
+    public var urlContainer: ServiceEndpointURLContainer
 
-    open var type: ServiceEndpointType = .get
+    public var type: ServiceEndpointType = .get
 
-    open var isAuthRequired: Bool = false
-    open var isIdempotent: Bool = true
+    public var isAuthRequired: Bool = false
+    public var isIdempotent: Bool = true
 
 
     // MARK: - Initialization

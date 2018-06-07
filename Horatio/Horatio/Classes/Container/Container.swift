@@ -43,7 +43,7 @@ open class Container {
     // we need a recursive lock, because sometimes we do a resolve() inside a resolve()
     fileprivate let servicesLock = NSRecursiveLock()
 
-    open func register<T>(_ serviceType: T.Type, name: String? = nil, factory: (Resolvable) -> T) -> ContainerEntry<T> {
+    open func register<T>(_ serviceType: T.Type, name: String? = nil, factory: @escaping (Resolvable) -> T) -> ContainerEntry<T> {
         return registerFactory(serviceType, factory: factory, name: name)
     }
 
@@ -64,8 +64,8 @@ open class Container {
     }
 
     @discardableResult
-    static open func register<T>(_ serviceType: T.Type, name: String? = nil, factory: (Resolvable) -> T) -> ContainerEntry<T> {
-        return sharedContainer.register(serviceType, name: name, factory: factory)
+    static public func register<T>(_ serviceType: T.Type, name: String? = nil, factory: @escaping (Resolvable) -> T) -> ContainerEntry<T> {
+        return Container.sharedContainer.register(serviceType, name: name, factory: factory)
     }
 }
 
