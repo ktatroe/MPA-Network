@@ -45,15 +45,15 @@ public enum ServiceEndpointStatus: Int16 {
 open class ServiceEndpointResponseStatus {
     // MARK: - Properties
 
-    open let identifier: ServiceRequestIdentifier
+    public let identifier: ServiceRequestIdentifier
 
-    open var updateDate: Date
+    public var updateDate: Date
 
-    open var activityState: ServiceEndpointState = .waiting
-    open var status: ServiceEndpointStatus = .unknown
+    public var activityState: ServiceEndpointState = .waiting
+    public var status: ServiceEndpointStatus = .unknown
 
-    open var error: NSError?
-    open var urlResponse: URLResponse?
+    public var error: NSError?
+    public var urlResponse: URLResponse?
 
 
     // MARK: - Initialization

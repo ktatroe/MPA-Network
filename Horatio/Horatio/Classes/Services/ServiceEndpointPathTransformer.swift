@@ -92,7 +92,7 @@ open class LocatorChainServiceEndpointPathTransformer: ServiceEndpointPathTransf
         var index = 0
 
         for pathPart in endpointPath.components(separatedBy: "/") {
-            if !pathPart.isEmpty && pathPart.characters[pathPart.startIndex] == ":" {
+            if !pathPart.isEmpty && pathPart[pathPart.startIndex] == ":" {
                 if index < locator.count {
                     // replace the next ":(foo)" with the first locator remaining
                     transformedComponents.append(locator[index])
